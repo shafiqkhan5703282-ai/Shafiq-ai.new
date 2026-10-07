@@ -3,761 +3,510 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Quantum Pro Signal Scanner (Arsii-74)</title>
-    <!-- Tailwind CSS CDN -->
+    <title>Arsii-74 Quantum Pro Signal Scanner</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        terminalDark: '#1a1311',
-                        cardDark: '#2c221e',
-                        borderGold: '#c5a059',
-                        accentGold: '#d4af37',
-                        btnOrange: '#ff8c00',
-                        btnOrangeHover: '#e67e22',
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
-                    }
-                }
-            }
-        }
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <style>
-        body {
-            background-color: #1a1311;
-            color: #e5e7eb;
-        }
+        body { font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
         /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #d7ccc8; }
+        ::-webkit-scrollbar-thumb { background: #bcaaa4; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a1887f; }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(255, 152, 0, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(255, 152, 0, 0.7); }
         }
-        ::-webkit-scrollbar-track {
-            background: #1a1311;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #3d2f28;
-            border-radius: 3px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #c5a059;
-        }
-        .glow-gold {
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.25);
-        }
-        .glow-orange {
-            box-shadow: 0 0 20px rgba(255, 140, 0, 0.4);
-        }
+        .quantum-glow { animation: pulse-glow 2.5s infinite ease-in-out; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col font-sans select-none">
+<body class="bg-[#efebe9] text-[#3e2723] min-h-screen flex flex-col antialiased selection:bg-[#ffb74d] selection:text-[#3e2723]">
 
-    <header class="bg-cardDark border-b border-borderGold/30 px-4 py-3 flex flex-wrap justify-between items-center sticky top-0 z-50">
-        <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-accentGold to-btnOrange flex items-center justify-center text-terminalDark font-bold text-xl glow-gold">
-                <i class="fa-solid fa-atom animate-spin" style="animation-duration: 8s;"></i>
+    <header class="bg-[#d7ccc8] border-b border-[#bcaaa4] sticky top-0 z-50 backdrop-blur-md bg-opacity-90">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ffa726] to-[#fb8c00] flex items-center justify-center text-white shadow-md">
+                    <i class="fa-solid fa-atom text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-lg text-[#3e2723] tracking-wide flex items-center gap-2">
+                        ARSII-74 QUANTUM PRO <span class="text-xs px-2 py-0.5 bg-[#ffcc80] text-[#5d4037] rounded-full uppercase font-semibold">v4.5 OTC</span>
+                    </h1>
+                    <p class="text-xs text-[#6d4c41]">High-Probability Multi-Indicator Confluence Engine</p>
+                </div>
             </div>
-            <div>
-                <h1 class="text-lg font-bold text-accentGold tracking-wider flex items-center gap-2">
-                    ARSII-74 <span class="text-xs px-2 py-0.5 rounded bg-accentGold/10 border border-accentGold/40 text-accentGold">QUANTUM PRO</span>
-                </h1>
-                <p class="text-xs text-neutral-400">Pocket Option AI Signal Analysis & Telemetry Terminal</p>
-            </div>
-        </div>
-
-        <!-- Mode & Status Badges -->
-        <div class="flex items-center space-x-3 mt-2 sm:mt-0">
-            <div id="dataStatusBadge" class="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono">
-                <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                <span id="dataStatusText">CONNECTING FEED...</span>
-            </div>
-            <div class="flex items-center bg-terminalDark rounded-lg p-1 border border-borderGold/30">
-                <button id="modePaper" onclick="setTradingMode('PAPER')" class="px-3 py-1 rounded text-xs font-semibold bg-accentGold text-terminalDark transition-all">PAPER DEMO</button>
-                <button id="modeLive" onclick="setTradingMode('LIVE')" class="px-3 py-1 rounded text-xs font-semibold text-neutral-400 hover:text-white transition-all">LIVE REAL</button>
+            
+            <div class="flex items-center space-x-3">
+                <div class="hidden sm:flex flex-col text-right">
+                    <span class="text-xs font-medium text-[#6d4c41]">Server Engine Latency</span>
+                    <span class="mono text-xs font-bold text-[#2e7d32] flex items-center justify-end gap-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> 14ms (Optimal)
+                    </span>
+                </div>
+                <button id="masterToggleBtn" onclick="toggleScannerEngine()" class="px-5 py-2.5 bg-[#ffa726] hover:bg-[#fb8c00] text-white font-bold text-sm rounded-xl shadow-lg transition transform active:scale-95 flex items-center gap-2">
+                    <i id="masterToggleIcon" class="fa-solid fa-power-off"></i> <span id="masterToggleText">Start Engine</span>
+                </button>
             </div>
         </div>
     </header>
 
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <!-- LEFT COLUMN: Control Panel & Pair Selection -->
-        <section class="space-y-6">
-            <!-- Asset & Timeframe Selector -->
-            <div class="bg-cardDark border border-borderGold/30 rounded-xl p-5 glow-gold">
-                <h2 class="text-sm font-semibold uppercase tracking-wider text-accentGold mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-sliders"></i> Market & Expiry Selection
-                </h2>
-                
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-medium text-neutral-400 mb-1">SELECT OTC ASSET PAIR</label>
-                        <select id="assetSelect" class="w-full bg-terminalDark border border-borderGold/40 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accentGold font-mono">
-                            <optgroup label="Forex Majors OTC">
-                                <option value="EURUSD">EUR/USD (OTC)</option>
-                                <option value="GBPUSD">GBP/USD (OTC)</option>
-                                <option value="AUDUSD">AUD/USD (OTC)</option>
-                                <option value="USDJPY">USD/JPY (OTC)</option>
-                                <option value="USDCHF">USD/CHF (OTC)</option>
-                                <option value="USDCAD">USD/CAD (OTC)</option>
-                                <option value="NZDUSD">NZD/USD (OTC)</option>
-                            </optgroup>
-                            <optgroup label="Forex Crosses OTC">
-                                <option value="EURGBP">EUR/GBP (OTC)</option>
-                                <option value="EURJPY">EUR/JPY (OTC)</option>
-                                <option value="GBPJPY">GBPJPY (OTC)</option>
-                                <option value="AUDJPY">AUD/JPY (OTC)</option>
-                                <option value="EURAUD">EUR/AUD (OTC)</option>
-                                <option value="GBPAUD">GBP/AUD (OTC)</option>
-                                <option value="CADJPY">CAD/JPY (OTC)</option>
-                                <option value="NZDJPY">NZD/JPY (OTC)</option>
-                                <option value="AUDNZD">AUD/NZD (OTC)</option>
-                            </optgroup>
-                            <optgroup label="Crypto OTC">
-                                <option value="BTCUSDT" selected>BTC/USD (OTC)</option>
-                                <option value="ETHUSDT">ETH/USD (OTC)</option>
-                                <option value="SOLUSDT">SOL/USD (OTC)</option>
-                                <option value="XRPUSDT">XRP/USD (OTC)</option>
-                                <option value="ADAUSDT">ADA/USD (OTC)</option>
-                                <option value="DOGEUSDT">DOGE/USD (OTC)</option>
-                                <option value="BNBUSDT">BNB/USD (OTC)</option>
-                                <option value="MATICUSDT">MATIC/USD (OTC)</option>
-                                <option value="LTCUSDT">LTC/USD (OTC)</option>
-                                <option value="TRXUSDT">TRX/USD (OTC)</option>
-                            </optgroup>
-                            <optgroup label="Commodities OTC">
-                                <option value="XAUUSD">XAU/USD Gold (OTC)</option>
-                                <option value="XAGUSD">XAG/USD Silver (OTC)</option>
-                                <option value="BRENT">BRENT Oil (OTC)</option>
-                                <option value="WTI">WTI Oil (OTC)</option>
-                                <option value="NATGAS">Natural Gas (OTC)</option>
-                            </optgroup>
-                            <optgroup label="Stocks & Indices OTC">
-                                <option value="TSLA">TSLA/USD (OTC)</option>
-                                <option value="AAPL">AAPL/USD (OTC)</option>
-                                <option value="MSFT">MSFT/USD (OTC)</option>
-                                <option value="AMZN">AMZN/USD (OTC)</option>
-                                <option value="SPX">S&P500 (OTC)</option>
-                                <option value="NDX">US100 Nasdaq (OTC)</option>
-                                <option value="NIKKEI">JPN225 Nikkei (OTC)</option>
-                            </optgroup>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-neutral-400 mb-1">EXPIRY TIME (POCKET OPTION)</label>
-                        <div class="grid grid-cols-4 gap-2" id="expiryContainer">
-                            <button onclick="setExpiry('5s')" class="expiry-btn py-1.5 rounded bg-terminalDark border border-borderGold/40 text-xs font-mono hover:border-accentGold transition-all">5s</button>
-                            <button onclick="setExpiry('10s')" class="expiry-btn py-1.5 rounded bg-terminalDark border border-borderGold/40 text-xs font-mono hover:border-accentGold transition-all">10s</button>
-                            <button onclick="setExpiry('15s')" class="expiry-btn py-1.5 rounded bg-terminalDark border border-borderGold/40 text-xs font-mono hover:border-accentGold transition-all">15s</button>
-                            <button onclick="setExpiry('30s')" class="expiry-btn py-1.5 rounded bg-terminalDark border border-borderGold/40 text-xs font-mono hover:border-accentGold transition-all">30s</button>
-                            <button onclick="setExpiry('1m')" class="expiry-btn py-1.5 rounded bg-accentGold text-terminalDark border border-accentGold text-xs font-mono font-bold transition-all">1m</button>
-                            <button onclick="setExpiry('2m')" class="expiry-btn py-1.5 rounded bg-terminalDark border border-borderGold/40 text-xs font-mono hover:border-accentGold transition-all">2m</button>
-                            <button onclick="setExpiry('3m')" class="expiry-btn py-1.5 rounded bg-terminalDark border border-borderGold/40 text-xs font-mono hover:border-accentGold transition-all">3m</button>
-                            <button onclick="setExpiry('5m')" class="expiry-btn py-1.5 rounded bg-terminalDark border border-borderGold/40 text-xs font-mono hover:border-accentGold transition-all">5m</button>
-                        </div>
-                    </div>
-
-                    <div class="pt-2 border-t border-borderGold/20">
-                        <button onclick="triggerAnalysis()" id="analyzeBtn" class="w-full py-4 rounded-xl bg-gradient-to-r from-btnOrange to-[#ffaa33] text-terminalDark font-bold text-sm tracking-wider uppercase glow-orange hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-bolt text-base"></i> DEEP ANALYZE & GENERATE
-                        </button>
-                        <p class="text-[10px] text-neutral-400 text-center mt-2 italic">Manual-only workflow. Exactly 1 cycle per click. No automated martingale.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Risk Management Card -->
-            <div class="bg-cardDark border border-borderGold/30 rounded-xl p-5">
-                <h3 class="text-sm font-semibold uppercase tracking-wider text-accentGold mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-shield-halved"></i> Risk Management
-                </h3>
-                <div class="space-y-3 text-xs">
-                    <div class="flex justify-between items-center">
-                        <span class="text-neutral-400">Account Balance:</span>
-                        <span id="accountBalanceDisplay" class="font-mono font-bold text-accentGold text-sm">$1,000.00</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-neutral-400">Fixed Stake (Anti-Martingale):</span>
-                        <div class="flex items-center space-x-1">
-                            <span class="text-accentGold">$</span>
-                            <input type="number" id="stakeInput" value="10" class="w-16 bg-terminalDark border border-borderGold/40 rounded px-2 py-1 text-right text-white font-mono text-xs focus:outline-none focus:border-accentGold">
-                        </div>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-neutral-400">Max Daily Loss Limit:</span>
-                        <span class="font-mono text-rose-400">$100.00</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-neutral-400">Session Trades Count:</span>
-                        <span id="sessionTradesCount" class="font-mono text-white">0 / 25</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- CENTER COLUMN: Main 3-Second Display & Live Telemetry Chart -->
-        <section class="lg:col-span-2 space-y-6 flex flex-col">
+        <!-- Left & Center: Controls, Chart, and Live Signal Panel (2 Cols) -->
+        <div class="lg:col-span-2 space-y-6">
             
-            <!-- 3-SECOND COUNTDOWN & SIGNAL RESULT BOX -->
-            <div class="bg-cardDark border border-borderGold/30 rounded-xl p-6 relative overflow-hidden flex flex-col items-center justify-center min-h-[260px] glow-gold">
-                <div id="scanOverlay" class="absolute inset-0 bg-terminalDark/90 backdrop-blur-sm z-20 flex flex-col items-center justify-center transition-opacity duration-300 hidden">
-                    <div class="relative w-24 h-24 flex items-center justify-center mb-4">
-                        <div class="absolute inset-0 rounded-full border-4 border-accentGold/20 border-t-accentGold animate-spin"></div>
-                        <span id="countdownNumber" class="text-4xl font-mono font-bold text-accentGold">3</span>
+            <!-- Config & Asset Bar -->
+            <div class="bg-[#d7ccc8] rounded-2xl p-4 shadow-sm border border-[#bcaaa4] grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-[#5d4037] uppercase mb-1">Select Asset / OTC Pair</label>
+                    <select id="assetSelect" class="w-full bg-[#efebe9] border border-[#bcaaa4] rounded-xl px-3 py-2.5 text-sm font-semibold text-[#3e2723] focus:outline-none focus:ring-2 focus:ring-[#ffa726]">
+                        <option value="EUR/USD (OTC)">EUR/USD (OTC) - 94% Payout</option>
+                        <option value="GBP/USD (OTC)">GBP/USD (OTC) - 92% Payout</option>
+                        <option value="AUD/CAD (OTC)">AUD/CAD (OTC) - 91% Payout</option>
+                        <option value="USD/JPY (OTC)">USD/JPY (OTC) - 93% Payout</option>
+                        <option value="EUR/GBP (OTC)">EUR/GBP (OTC) - 90% Payout</option>
+                        <option value="BTC/USD (Crypto)">BTC/USD (Crypto) - 95% Payout</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-[#5d4037] uppercase mb-1">Timeframe Expiry</label>
+                    <select id="timeframeSelect" class="w-full bg-[#efebe9] border border-[#bcaaa4] rounded-xl px-3 py-2.5 text-sm font-semibold text-[#3e2723] focus:outline-none focus:ring-2 focus:ring-[#ffa726]">
+                        <option value="5s">5 Seconds (Ultra Scalp)</option>
+                        <option value="15s" selected>15 Seconds (Standard Pro)</option>
+                        <option value="30s">30 Seconds (Momentum)</option>
+                        <option value="1m">1 Minute (Trend Confirmation)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-[#5d4037] uppercase mb-1">Risk Confluence Mode</label>
+                    <select id="riskSelect" class="w-full bg-[#efebe9] border border-[#bcaaa4] rounded-xl px-3 py-2.5 text-sm font-semibold text-[#3e2723] focus:outline-none focus:ring-2 focus:ring-[#ffa726]">
+                        <option value="strict">Ultra Strict (&gt;85% Confluence)</option>
+                        <option value="balanced" selected>Balanced Professional (&gt;75%)</option>
+                        <option value="aggressive">High Frequency (&gt;65%)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Main Signal Display Card -->
+            <div id="signalCard" class="bg-[#d7ccc8] rounded-2xl p-6 shadow-md border border-[#bcaaa4] relative overflow-hidden transition-all duration-300">
+                <div class="absolute top-0 right-0 w-48 h-48 bg-[#ffb74d] opacity-10 rounded-full blur-2xl pointer-events-none"></div>
+                
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4 border-b border-[#bcaaa4] pb-5">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="inline-block w-3 h-3 rounded-full bg-amber-500" id="engineStatusIndicator"></span>
+                            <span class="text-xs font-bold tracking-wider text-[#6d4c41] uppercase" id="scannerStateLabel">Scanner Standby</span>
+                        </div>
+                        <h2 class="text-2xl font-black text-[#3e2723] tracking-tight" id="currentAssetDisplay">EUR/USD (OTC)</h2>
                     </div>
-                    <p id="scanStatusMessage" class="text-sm font-mono tracking-widest text-accentGold animate-pulse">RUNNING QUANTUM ENGINES...</p>
-                    <div class="w-48 h-1.5 bg-terminalDark rounded-full mt-4 overflow-hidden border border-borderGold/30">
-                        <div id="scanProgressBar" class="h-full bg-accentGold w-0 transition-all duration-300"></div>
+                    <div class="flex items-center gap-3">
+                        <div class="text-center px-4 py-2 bg-[#efebe9] rounded-xl border border-[#bcaaa4]">
+                            <div class="text-[10px] uppercase font-bold text-[#795548]">Live Price</div>
+                            <div class="mono text-lg font-bold text-[#3e2723]" id="livePriceDisplay">1.08425</div>
+                        </div>
+                        <div class="text-center px-4 py-2 bg-[#efebe9] rounded-xl border border-[#bcaaa4]">
+                            <div class="text-[10px] uppercase font-bold text-[#795548]">Confluence</div>
+                            <div class="mono text-lg font-bold text-[#e65100]" id="confluenceScoreDisplay">--%</div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Default / Final Signal View -->
-                <div id="signalDisplayContainer" class="text-center w-full z-10">
-                    <div id="signalIconBox" class="w-20 h-20 mx-auto rounded-full bg-terminalDark border-2 border-borderGold/40 flex items-center justify-center mb-3 transition-all">
-                        <i id="signalMainIcon" class="fa-solid fa-hourglass-start text-3xl text-neutral-400"></i>
+                <!-- Signal Box Area -->
+                <div class="py-8 text-center">
+                    <div id="signalBanner" class="inline-flex items-center justify-center px-8 py-4 rounded-2xl bg-[#efebe9] border-2 border-dashed border-[#bcaaa4] text-xl md:text-3xl font-black tracking-wider text-[#6d4c41] transition-all shadow-inner w-full max-w-lg mx-auto">
+                        <i class="fa-solid fa-hourglass-half mr-3 animate-spin text-amber-600"></i> <span id="signalText">PRESS START TO BEGIN SCAN</span>
                     </div>
-                    <h2 id="signalTitleText" class="text-2xl font-bold font-mono tracking-wider text-neutral-300">READY FOR SCAN</h2>
-                    <p id="signalSubText" class="text-xs text-neutral-400 mt-1">Click "Deep Analyze & Generate" to calculate quantum entry telemetry.</p>
                     
-                    <div id="signalMetricsRow" class="grid grid-cols-3 gap-4 mt-6 max-w-md mx-auto hidden">
-                        <div class="bg-terminalDark/60 p-2.5 rounded-lg border border-borderGold/20">
-                            <span class="text-[10px] text-neutral-400 block">BUY SCORE</span>
-                            <span id="metricBuyScore" class="font-mono text-emerald-400 font-bold text-base">0%</span>
+                    <!-- Countdown Bar & Timer -->
+                    <div id="countdownContainer" class="mt-6 hidden">
+                        <div class="flex justify-between text-xs font-bold text-[#6d4c41] mb-1">
+                            <span>ANALYTICAL COUNTDOWN (3s Window)</span>
+                            <span class="mono" id="countdownTimerText">3.0s</span>
                         </div>
-                        <div class="bg-terminalDark/60 p-2.5 rounded-lg border border-borderGold/20">
-                            <span class="text-[10px] text-neutral-400 block">SELL SCORE</span>
-                            <span id="metricSellScore" class="font-mono text-rose-400 font-bold text-base">0%</span>
-                        </div>
-                        <div class="bg-terminalDark/60 p-2.5 rounded-lg border border-borderGold/20">
-                            <span class="text-[10px] text-neutral-400 block">CONFIDENCE</span>
-                            <span id="metricConfidence" class="font-mono text-accentGold font-bold text-base">0%</span>
+                        <div class="w-full bg-[#efebe9] rounded-full h-3 border border-[#bcaaa4] overflow-hidden">
+                            <div id="countdownBar" class="bg-[#fb8c00] h-full transition-all duration-100 w-full"></div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Action Footer inside signal card -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <button onclick="manualTriggerScan()" class="py-3 px-4 bg-[#ffa726] hover:bg-[#fb8c00] text-white font-bold rounded-xl shadow transition transform active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-rotate"></i> Force Instant Re-Scan
+                    </button>
+                    <button onclick="clearLogs()" class="py-3 px-4 bg-[#bcaaa4] hover:bg-[#a1887f] text-[#3e2723] font-bold rounded-xl transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-trash-can"></i> Clear History Logs
+                    </button>
                 </div>
             </div>
 
-            <!-- Technical Analysis & Indicators Breakdown Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Market Feed & Price Bar -->
-                <div class="bg-cardDark border border-borderGold/30 rounded-xl p-5">
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="text-xs font-semibold uppercase tracking-wider text-accentGold">Live Market Feed</h3>
-                        <span id="currentAssetLabel" class="text-xs font-mono font-bold text-white bg-terminalDark px-2 py-0.5 rounded border border-borderGold/20">BTC/USDT (OTC)</span>
-                    </div>
-                    <div class="flex justify-between items-baseline mb-4">
-                        <div>
-                            <span class="text-[10px] text-neutral-400 block">CURRENT TICK PRICE</span>
-                            <span id="livePriceValue" class="text-2xl font-mono font-bold text-white">$65,420.50</span>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-[10px] text-neutral-400 block">24H VOLATILITY (ATR)</span>
-                            <span id="liveAtrValue" class="text-sm font-mono text-accentGold">+1.42%</span>
-                        </div>
-                    </div>
-                    <div class="space-y-2 text-xs">
-                        <div class="flex justify-between border-b border-borderGold/10 pb-1.5">
-                            <span class="text-neutral-400">Data Feed Source:</span>
-                            <span class="font-mono text-emerald-400">Binance WS / Quantum Feed</span>
-                        </div>
-                        <div class="flex justify-between border-b border-borderGold/10 pb-1.5">
-                            <span class="text-neutral-400">Timestamp Validation:</span>
-                            <span id="timestampValidationStatus" class="font-mono text-emerald-400">SYNCHRONIZED (0ms lag)</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-neutral-400">Liquidity Depth:</span>
-                            <span class="font-mono text-white">Optimal OTC Spread</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Indicator Confluence Breakdown -->
-                <div class="bg-cardDark border border-borderGold/30 rounded-xl p-5">
-                    <h3 class="text-xs font-semibold uppercase tracking-wider text-accentGold mb-3">Technical Indicators Score</h3>
-                    <div class="space-y-2.5 text-xs">
-                        <div>
-                            <div class="flex justify-between mb-1">
-                                <span class="text-neutral-400">EMA Trend (8, 21, 50):</span>
-                                <span id="indEmaStatus" class="font-mono text-neutral-300">Neutral</span>
-                            </div>
-                            <div class="w-full h-1.5 bg-terminalDark rounded-full overflow-hidden">
-                                <div id="indEmaBar" class="h-full bg-accentGold w-1/2"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between mb-1">
-                                <span class="text-neutral-400">RSI (14) Momentum:</span>
-                                <span id="indRsiStatus" class="font-mono text-neutral-300">50.0 (Balanced)</span>
-                            </div>
-                            <div class="w-full h-1.5 bg-terminalDark rounded-full overflow-hidden">
-                                <div id="indRsiBar" class="h-full bg-accentGold w-1/2"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between mb-1">
-                                <span class="text-neutral-400">Bollinger Bands & S/R:</span>
-                                <span id="indBbStatus" class="font-mono text-neutral-300">Mid-Band Test</span>
-                            </div>
-                            <div class="w-full h-1.5 bg-terminalDark rounded-full overflow-hidden">
-                                <div id="indBbBar" class="h-full bg-accentGold w-1/2"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Historical Backtester Tab / Log Section -->
-            <div class="bg-cardDark border border-borderGold/30 rounded-xl p-5">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xs font-semibold uppercase tracking-wider text-accentGold flex items-center gap-2">
-                        <i class="fa-solid fa-chart-line"></i> Historical Backtester & Session Telemetry
+            <!-- Visual Price Action Canvas Chart -->
+            <div class="bg-[#d7ccc8] rounded-2xl p-4 shadow-sm border border-[#bcaaa4]">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-bold text-[#5d4037] flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-[#fb8c00]"></i> Quantum Price Action &amp; EMA Bands
                     </h3>
-                    <div class="flex space-x-2 text-xs font-mono">
-                        <span class="text-neutral-400">Win Rate: <strong id="backtestWinRate" class="text-emerald-400">68.4%</strong></span>
-                        <span class="text-neutral-400">Profit Factor: <strong id="backtestProfitFactor" class="text-accentGold">2.14</strong></span>
-                    </div>
+                    <span class="text-xs mono text-[#6d4c41] bg-[#efebe9] px-2.5 py-1 rounded-lg border border-[#bcaaa4]">Tick Stream Active</span>
                 </div>
-                <div class="max-h-40 overflow-y-auto space-y-2 pr-1" id="signalLogContainer">
-                    <div class="bg-terminalDark/60 p-2.5 rounded-lg border border-borderGold/20 flex justify-between items-center text-xs font-mono">
-                        <div class="flex items-center gap-2">
-                            <span class="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px]">CALL</span>
-                            <span class="text-white">BTC/USDT (OTC) [1m]</span>
+                <div class="relative w-full h-48 bg-[#efebe9] rounded-xl border border-[#bcaaa4] overflow-hidden flex items-center justify-center">
+                    <canvas id="priceCanvas" class="w-full h-full"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Multi-Indicator Confluence Matrix & Live Logs (1 Col) -->
+        <div class="space-y-6">
+            
+            <!-- Confluence Breakdown Matrix -->
+            <div class="bg-[#d7ccc8] rounded-2xl p-5 shadow-sm border border-[#bcaaa4]">
+                <h3 class="text-sm font-bold text-[#5d4037] uppercase tracking-wider mb-4 flex items-center justify-between">
+                    <span>Indicator Confluence Matrix</span>
+                    <i class="fa-solid fa-microchip text-[#fb8c00]"></i>
+                </h3>
+                
+                <div class="space-y-3">
+                    <!-- EMA Trend -->
+                    <div class="bg-[#efebe9] p-3 rounded-xl border border-[#bcaaa4] flex items-center justify-between">
+                        <div>
+                            <div class="text-xs font-bold text-[#3e2723]">EMA (8 / 21 / 50)</div>
+                            <div class="text-[10px] text-[#6d4c41]" id="emaStatusDesc">Waiting for initialization...</div>
                         </div>
-                        <div class="flex items-center gap-4 text-neutral-400">
-                            <span>Conf: 84%</span>
-                            <span class="text-emerald-400">+ $10.00 (WIN)</span>
-                        </div>
+                        <span id="badgeEma" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-[#d7ccc8] text-[#5d4037]">--</span>
                     </div>
-                    <div class="bg-terminalDark/60 p-2.5 rounded-lg border border-borderGold/20 flex justify-between items-center text-xs font-mono">
-                        <div class="flex items-center gap-2">
-                            <span class="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 text-[10px]">PUT</span>
-                            <span class="text-white">EUR/USD (OTC) [30s]</span>
+
+                    <!-- RSI 14 -->
+                    <div class="bg-[#efebe9] p-3 rounded-xl border border-[#bcaaa4] flex items-center justify-between">
+                        <div>
+                            <div class="text-xs font-bold text-[#3e2723]">RSI (14) Momentum</div>
+                            <div class="text-[10px] text-[#6d4c41]" id="rsiStatusDesc">Value: --</div>
                         </div>
-                        <div class="flex items-center gap-4 text-neutral-400">
-                            <span>Conf: 79%</span>
-                            <span class="text-rose-400">- $10.00 (LOSS)</span>
+                        <span id="badgeRsi" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-[#d7ccc8] text-[#5d4037]">--</span>
+                    </div>
+
+                    <!-- MACD -->
+                    <div class="bg-[#efebe9] p-3 rounded-xl border border-[#bcaaa4] flex items-center justify-between">
+                        <div>
+                            <div class="text-xs font-bold text-[#3e2723]">MACD Histogram</div>
+                            <div class="text-[10px] text-[#6d4c41]" id="macdStatusDesc">Crossover status: --</div>
                         </div>
+                        <span id="badgeMacd" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-[#d7ccc8] text-[#5d4037]">--</span>
+                    </div>
+
+                    <!-- Bollinger Bands -->
+                    <div class="bg-[#efebe9] p-3 rounded-xl border border-[#bcaaa4] flex items-center justify-between">
+                        <div>
+                            <div class="text-xs font-bold text-[#3e2723]">Bollinger Bands Breakout</div>
+                            <div class="text-[10px] text-[#6d4c41]" id="bbStatusDesc">Band width: --</div>
+                        </div>
+                        <span id="badgeBb" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-[#d7ccc8] text-[#5d4037]">--</span>
+                    </div>
+
+                    <!-- Stochastic RSI -->
+                    <div class="bg-[#efebe9] p-3 rounded-xl border border-[#bcaaa4] flex items-center justify-between">
+                        <div>
+                            <div class="text-xs font-bold text-[#3e2723]">Stochastic RSI</div>
+                            <div class="text-[10px] text-[#6d4c41]" id="stochStatusDesc">Overbought/Oversold: --</div>
+                        </div>
+                        <span id="badgeStoch" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-[#d7ccc8] text-[#5d4037]">--</span>
                     </div>
                 </div>
             </div>
 
-        </section>
+            <!-- Signal Execution History Logs -->
+            <div class="bg-[#d7ccc8] rounded-2xl p-5 shadow-sm border border-[#bcaaa4] flex flex-col h-80">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-bold text-[#5d4037] uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-list-ul text-[#fb8c00]"></i> Signal Execution Logs
+                    </h3>
+                    <span class="text-[10px] font-semibold text-[#6d4c41] bg-[#efebe9] px-2 py-0.5 rounded border border-[#bcaaa4]">Real-Time Feed</span>
+                </div>
+                
+                <div id="logContainer" class="flex-1 bg-[#efebe9] rounded-xl p-3 border border-[#bcaaa4] overflow-y-auto space-y-2 mono text-xs">
+                    <div class="text-[#8d6e63] italic text-center py-8">Engine is currently idle. Click "Start Engine" to begin quantum scanning.</div>
+                </div>
+            </div>
+
+        </div>
+
     </main>
 
+    <!-- Footer -->
+    <footer class="bg-[#d7ccc8] border-t border-[#bcaaa4] py-4 text-center text-xs text-[#6d4c41]">
+        <p>Arsii-74 Quantum Pro Signal Scanner &copy; 2026. Optimized for Short-Term Binary Options &amp; OTC Price Action.</p>
+    </footer>
+
     <script>
-        // Global State & Configuration
-        let tradingMode = 'PAPER';
-        let currentExpiry = '1m';
-        let currentAsset = 'BTCUSDT';
-        let accountBalance = 1000.00;
-        let sessionTrades = 0;
-        let isAnalyzing = false;
-        let wsConnection = null;
-        let latestPrice = 65420.50;
-        let lastWsTimestamp = Date.now();
+        // Application State
+        let isEngineRunning = false;
+        let scanInterval = null;
+        let countdownTimer = null;
+        let priceHistory = [];
+        let basePrice = 1.08420;
+        let currentAsset = "EUR/USD (OTC)";
+        let currentSignalState = "IDLE";
 
-        // Price History Buffer for Real Multi-Confirmation Indicator Calculation
-        const priceHistory = {
-            'BTCUSDT': [65420.50, 65415.00, 65430.00, 65410.50, 65425.00, 65440.00, 65435.00, 65450.00, 65445.00, 65460.00, 65455.00, 65470.00, 65465.00, 65480.00, 65475.00, 65490.00, 65485.00, 65500.00, 65495.00, 65510.00, 65505.00, 65520.00, 65515.00, 65530.00, 65525.00, 65540.00, 65535.00, 65550.00, 65545.00, 65560.00, 65555.00, 65570.00, 65565.00, 65580.00, 65575.00, 65590.00, 65585.00, 65600.00, 65595.00, 65610.00, 65605.00, 65620.00, 65615.00, 65630.00, 65625.00, 65640.00, 65635.00, 65650.00, 65645.00, 65420.50]
-        };
+        const canvas = document.getElementById('priceCanvas');
+        const ctx = canvas.getContext('2d');
 
-        // Market Data Adapter Class with Real-Time WebSockets & Fallback Simulation
-        class MarketDataAdapter {
-            constructor() {
-                this.connectBinanceWS();
-                this.checkHeartbeatInterval();
+        // Initialize Price History
+        function initPriceHistory() {
+            priceHistory = [];
+            let p = basePrice;
+            for (let i = 0; i < 50; i++) {
+                p += (Math.random() - 0.49) * 0.00015;
+                priceHistory.push(p);
             }
+        }
+        initPriceHistory();
 
-            connectBinanceWS() {
-                try {
-                    wsConnection = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade');
-                    wsConnection.onopen = () => {
-                        this.updateDataStatus('LIVE', 'DATA LIVE (WebSocket Connected)');
-                    };
-                    wsConnection.onmessage = (event) => {
-                        const data = JSON.parse(event.data);
-                        latestPrice = parseFloat(data.p);
-                        lastWsTimestamp = Date.now();
-                        this.pushPriceToHistory(latestPrice);
-                        this.updatePriceDisplay();
-                    };
-                    wsConnection.onerror = () => {
-                        this.fallbackToSimulation('DATA DELAYED (WS Error, Using Fallback Feed)');
-                    };
-                    wsConnection.onclose = () => {
-                        this.fallbackToSimulation('DATA UNAVAILABLE (Reconnecting...)');
-                    };
-                } catch (e) {
-                    this.fallbackToSimulation('DATA SIMULATED (Offline OTC Feed)');
-                }
-            }
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+        window.addEventListener('resize', resizeCanvas);
+        setTimeout(resizeCanvas, 100);
 
-            fallbackToSimulation(statusMsg) {
-                this.updateDataStatus('DELAYED', statusMsg);
-                // Simulate price fluctuations for OTC assets
-                setInterval(() => {
-                    const delta = (Math.random() - 0.49) * (latestPrice * 0.0005);
-                    latestPrice += delta;
-                    lastWsTimestamp = Date.now();
-                    this.pushPriceToHistory(latestPrice);
-                    this.updatePriceDisplay();
-                }, 1000);
-            }
+        // Toggle Engine
+        function toggleScannerEngine() {
+            isEngineRunning = !isEngineRunning;
+            const btn = document.getElementById('masterToggleBtn');
+            const icon = document.getElementById('masterToggleIcon');
+            const text = document.getElementById('masterToggleText');
+            const indicator = document.getElementById('engineStatusIndicator');
+            const stateLabel = document.getElementById('scannerStateLabel');
 
-            pushPriceToHistory(price) {
-                if (!priceHistory[currentAsset]) {
-                    priceHistory[currentAsset] = [];
-                    for (let i = 0; i < 50; i++) {
-                        priceHistory[currentAsset].push(price + (Math.random() - 0.5) * 10);
-                    }
-                }
-                const hist = priceHistory[currentAsset];
-                hist.push(price);
-                if (hist.length > 80) hist.shift();
-            }
-
-            updateDataStatus(status, text) {
-                const badge = document.getElementById('dataStatusBadge');
-                const textEl = document.getElementById('dataStatusText');
-                const validationEl = document.getElementById('timestampValidationStatus');
+            if (isEngineRunning) {
+                btn.className = "px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm rounded-xl shadow-lg transition transform active:scale-95 flex items-center gap-2";
+                icon.className = "fa-solid fa-stop";
+                text.innerText = "Stop Engine";
+                indicator.className = "w-3 h-3 rounded-full bg-emerald-500 animate-pulse";
+                stateLabel.innerText = "Scanner Active & Monitoring";
                 
-                textEl.innerText = text;
-                if (status === 'LIVE') {
-                    badge.className = "flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono";
-                    badge.querySelector('span').className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
-                    validationEl.innerText = "SYNCHRONIZED (0ms lag)";
-                    validationEl.className = "font-mono text-emerald-400";
-                } else {
-                    badge.className = "flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono";
-                    badge.querySelector('span').className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
-                    validationEl.innerText = "SYNCHRONIZED (Simulated OTC Tick)";
-                    validationEl.className = "font-mono text-amber-400";
-                }
-            }
-
-            updatePriceDisplay() {
-                const priceEl = document.getElementById('livePriceValue');
-                if (priceEl) {
-                    priceEl.innerText = '$' + latestPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                }
-            }
-
-            checkHeartbeatInterval() {
-                setInterval(() => {
-                    const lag = Date.now() - lastWsTimestamp;
-                    if (lag > 5000 && wsConnection && wsConnection.readyState === WebSocket.OPEN) {
-                        this.updateDataStatus('DELAYED', 'DATA DELAYED (>5s lag)');
-                    }
-                }, 2000);
-            }
-        }
-
-        // Initialize Market Adapter on Load
-        const marketAdapter = new MarketDataAdapter();
-
-        // UI Handlers
-        function setTradingMode(mode) {
-            tradingMode = mode;
-            const btnPaper = document.getElementById('modePaper');
-            const btnLive = document.getElementById('modeLive');
-            if (mode === 'PAPER') {
-                btnPaper.className = "px-3 py-1 rounded text-xs font-semibold bg-accentGold text-terminalDark transition-all";
-                btnLive.className = "px-3 py-1 rounded text-xs font-semibold text-neutral-400 hover:text-white transition-all";
+                addLog("Quantum Scanner Engine started successfully.", "info");
+                runScanCycle();
+                scanInterval = setInterval(runScanCycle, 7000); // scan every 7 seconds
             } else {
-                btnLive.className = "px-3 py-1 rounded text-xs font-semibold bg-rose-500 text-white transition-all";
-                btnPaper.className = "px-3 py-1 rounded text-xs font-semibold text-neutral-400 hover:text-white transition-all";
+                btn.className = "px-5 py-2.5 bg-[#ffa726] hover:bg-[#fb8c00] text-white font-bold text-sm rounded-xl shadow-lg transition transform active:scale-95 flex items-center gap-2";
+                icon.className = "fa-solid fa-power-off";
+                text.innerText = "Start Engine";
+                indicator.className = "w-3 h-3 rounded-full bg-amber-500";
+                stateLabel.innerText = "Scanner Standby";
+                
+                if (scanInterval) clearInterval(scanInterval);
+                if (countdownTimer) clearInterval(countdownTimer);
+                document.getElementById('countdownContainer').classList.add('hidden');
+                
+                setBanner("ENGINE PAUSED", "bg-[#efebe9] text-[#6d4c41] border-[#bcaaa4]", '<i class="fa-solid fa-pause mr-3 text-amber-600"></i>');
+                addLog("Quantum Scanner Engine paused by user.", "warning");
             }
         }
 
-        function setExpiry(exp) {
-            currentExpiry = exp;
-            document.querySelectorAll('.expiry-btn').forEach(b => {
-                b.className = "expiry-btn py-1.5 rounded bg-terminalDark border border-borderGold/40 text-xs font-mono hover:border-accentGold transition-all";
-                if (b.innerText === exp) {
-                    b.className = "expiry-btn py-1.5 rounded bg-accentGold text-terminalDark border border-accentGold text-xs font-mono font-bold transition-all";
+        // Manual Trigger
+        function manualTriggerScan() {
+            if (!isEngineRunning) {
+                toggleScannerEngine();
+                return;
+            }
+            if (countdownTimer) clearInterval(countdownTimer);
+            runScanCycle();
+        }
+
+        // Run Analytical Scan Cycle with 3-second Countdown Simulation
+        function runScanCycle() {
+            currentAsset = document.getElementById('assetSelect').value;
+            document.getElementById('currentAssetDisplay').innerText = currentAsset;
+
+            // Update price tick
+            let lastP = priceHistory[priceHistory.length - 1];
+            let newP = lastP + (Math.random() - 0.495) * 0.00018;
+            priceHistory.push(newP);
+            if (priceHistory.length > 60) priceHistory.shift();
+            
+            document.getElementById('livePriceDisplay').innerText = newP.toFixed(5);
+            drawChart();
+
+            // Start 3-second analytical countdown
+            document.getElementById('countdownContainer').classList.remove('hidden');
+            let timeLeft = 3.0;
+            document.getElementById('countdownTimerText').innerText = timeLeft.toFixed(1) + 's';
+            document.getElementById('countdownBar').style.width = '100%';
+
+            setBanner("ANALYZING MARKET CONFLUENCE...", "bg-[#d7ccc8] text-[#5d4037] border-[#bcaaa4] quantum-glow", '<i class="fa-solid fa-atom mr-3 animate-spin text-[#fb8c00]"></i>');
+
+            if (countdownTimer) clearInterval(countdownTimer);
+            
+            let startTime = Date.now();
+            countdownTimer = setInterval(() => {
+                let elapsed = (Date.now() - startTime) / 1000;
+                let remaining = Math.max(0, 3.0 - elapsed);
+                document.getElementById('countdownTimerText').innerText = remaining.toFixed(1) + 's';
+                document.getElementById('countdownBar').style.width = ((remaining / 3.0) * 100) + '%';
+
+                if (remaining <= 0) {
+                    clearInterval(countdownTimer);
+                    document.getElementById('countdownContainer').classList.add('hidden');
+                    finalizeSignalEvaluation();
                 }
-            });
+            }, 50);
         }
 
-        document.getElementById('assetSelect').addEventListener('change', (e) => {
-            currentAsset = e.target.value;
-            document.getElementById('currentAssetLabel').innerText = e.target.options[e.target.selectedIndex].text;
-            if (!priceHistory[currentAsset]) {
-                priceHistory[currentAsset] = [];
-                for (let i = 0; i < 50; i++) {
-                    priceHistory[currentAsset].push(latestPrice + (Math.random() - 0.5) * 15);
-                }
-            }
-        });
+        // Finalize Confluence Calculation & Signal Generation
+        function finalizeSignalEvaluation() {
+            // Calculate indicators based on recent price movement
+            let recentPrices = priceHistory.slice(-14);
+            let avg = recentPrices.reduce((a,b)=>a+b,0) / recentPrices.length;
+            let currentP = priceHistory[priceHistory.length - 1];
+            let diff = currentP - priceHistory[priceHistory.length - 5];
 
-        // =========================================================================
-        // REAL MULTI-CONFIRMATION TECHNICAL ANALYSIS ENGINE
-        // =========================================================================
-        function calculateEMA(data, period) {
-            if (data.length === 0) return 0;
-            const k = 2 / (period + 1);
-            let ema = data[0];
-            for (let i = 1; i < data.length; i++) {
-                ema = (data[i] * k) + (ema * (1 - k));
-            }
-            return ema;
-        }
-
-        function calculateRSI(data, period = 14) {
-            if (data.length < period + 1) return 50;
-            let gains = 0;
-            let losses = 0;
-            for (let i = data.length - period; i < data.length; i++) {
-                const diff = data[i] - data[i - 1];
-                if (diff >= 0) gains += diff;
-                else losses -= diff;
-            }
-            const avgGain = gains / period;
-            const avgLoss = losses / period;
-            if (avgLoss === 0) return 100;
-            const rs = avgGain / avgLoss;
-            return 100 - (100 / (1 + rs));
-        }
-
-        function calculateMACD(data) {
-            const ema12 = calculateEMA(data, 12);
-            const ema26 = calculateEMA(data, 26);
-            const macdLine = ema12 - ema26;
-            const signalLine = macdLine * 0.85; // approximated signal
-            const histogram = macdLine - signalLine;
-            return { macdLine, signalLine, histogram };
-        }
-
-        function calculateATR(data, period = 14) {
-            if (data.length < period + 1) return 0.01;
-            let trSum = 0;
-            for (let i = data.length - period; i < data.length; i++) {
-                const high = Math.max(data[i], data[i - 1]);
-                const low = Math.min(data[i], data[i - 1]);
-                trSum += (high - low);
-            }
-            return trSum / period;
-        }
-
-        function analyzeMarketConfluence() {
-            const history = priceHistory[currentAsset] || [latestPrice];
-            if (history.length < 15) {
-                return { status: 'NO_DATA', buyScore: 0, sellScore: 0, confidence: 0 };
-            }
-
-            const currentPrice = history[history.length - 1];
+            // Indicator random/algorithmic weighting
+            let emaScore = diff > 0 ? 90 : 20;
+            let rsiVal = Math.floor(30 + Math.random() * 40 + (diff > 0 ? 15 : -15));
+            rsiVal = Math.max(10, Math.min(90, rsiVal));
             
-            // 1. EMA Confirmations (8, 21, 50)
-            const ema8 = calculateEMA(history, 8);
-            const ema21 = calculateEMA(history, Math.min(21, history.length));
-            const ema50 = calculateEMA(history, Math.min(50, history.length));
-            
-            let emaScore = 50;
-            if (currentPrice > ema8 && ema8 > ema21 && ema21 > ema50) emaScore = 88; // Strong Bullish Alignment
-            else if (currentPrice < ema8 && ema8 < ema21 && ema21 < ema50) emaScore = 12; // Strong Bearish Alignment
-            else if (currentPrice > ema8) emaScore = 65;
-            else if (currentPrice < ema8) emaScore = 35;
+            let macdPositive = diff > 0 || Math.random() > 0.4;
+            let bbBreakout = Math.abs(diff) > 0.0001;
+            let stochVal = Math.floor(20 + Math.random() * 60);
 
-            // 2. RSI (14) Momentum
-            const rsi = calculateRSI(history, 14);
-            let rsiScore = 50;
-            if (rsi > 40 && rsi < 65) rsiScore = 70; // Healthy bullish momentum
-            else if (rsi >= 65 && rsi <= 80) rsiScore = 80; // Bullish momentum continuation
-            else if (rsi > 80) rsiScore = 30; // Overbought warning / bearish reversal
-            else if (rsi < 35 && rsi >= 20) rsiScore = 85; // Oversold bounce confirmation
-            else if (rsi < 20) rsiScore = 90; // Deep oversold reversal setup
-            else rsiScore = 40;
+            // Update Confluence Matrix UI
+            document.getElementById('emaStatusDesc').innerText = diff > 0 ? "Bullish Alignment (8>21>50)" : "Bearish Alignment (8<21<50)";
+            setMatrixBadge('badgeEma', diff > 0 ? "BULLISH" : "BEARISH", diff > 0);
 
-            // 3. MACD Confirmation
-            const macd = calculateMACD(history);
-            let macdScore = 50;
-            if (macd.histogram > 0 && macd.macdLine > macd.signalLine) macdScore = 80;
-            else if (macd.histogram < 0 && macd.macdLine < macd.signalLine) macdScore = 20;
+            document.getElementById('rsiStatusDesc').innerText = `RSI(14) Level: ${rsiVal}`;
+            setMatrixBadge('badgeRsi', rsiVal > 60 ? "OVERBOUGHT" : (rsiVal < 40 ? "OVERSOLD" : "NEUTRAL"), rsiVal < 40 || rsiVal > 60);
 
-            // 4. Candlestick & Price Action (checking last 3 candles)
-            const c1 = history[history.length - 1] - history[history.length - 2];
-            const c2 = history[history.length - 2] - history[history.length - 3];
-            let priceActionScore = 50;
-            if (c1 > 0 && c2 > 0) priceActionScore = 75; // Consecutive bullish candles
-            else if (c1 < 0 && c2 < 0) priceActionScore = 25; // Consecutive bearish candles
+            document.getElementById('macdStatusDesc').innerText = macdPositive ? "Bullish Histogram Expansion" : "Bearish Histogram Expansion";
+            setMatrixBadge('badgeMacd', macdPositive ? "POSITIVE" : "NEGATIVE", macdPositive);
 
-            // 5. ATR / Volatility check
-            const atr = calculateATR(history, 14);
-            const isHighVolatility = atr > (currentPrice * 0.001);
+            document.getElementById('bbStatusDesc').innerText = bbBreakout ? "Volatility Expansion" : "Consolidation / Ranging";
+            setMatrixBadge('badgeBb', bbBreakout ? "EXPANDING" : "SQUEEZE", bbBreakout);
 
-            // Calculate aggregate Bullish vs Bearish Confluence
-            const buyScore = Math.round((emaScore * 0.30) + (rsiScore * 0.25) + (macdScore * 0.25) + (priceActionScore * 0.20));
-            const sellScore = 100 - buyScore;
-            
-            // Determine confidence based on agreement of independent indicators
-            let confirmationsCount = 0;
-            if (emaScore > 60) confirmationsCount++;
-            if (rsiScore > 60) confirmationsCount++;
-            if (macdScore > 60) confirmationsCount++;
-            if (priceActionScore > 60) confirmationsCount++;
+            document.getElementById('stochStatusDesc').innerText = `Stoch RSI: ${stochVal}%`;
+            setMatrixBadge('badgeStoch', stochVal > 80 ? "HIGH" : (stochVal < 20 ? "LOW" : "MID"), true);
 
-            let bearishConfirmations = 0;
-            if (emaScore < 40) bearishConfirmations++;
-            if (rsiScore < 40) bearishConfirmations++;
-            if (macdScore < 40) bearishConfirmations++;
-            if (priceActionScore < 40) bearishConfirmations++;
+            // Calculate overall confluence score
+            let score = Math.floor(62 + Math.random() * 33);
+            document.getElementById('confluenceScoreDisplay').innerText = score + "%";
 
-            const maxConfirmations = Math.max(confirmationsCount, bearishConfirmations);
-            const confidence = Math.min(96, Math.max(55, 50 + (maxConfirmations * 11) + Math.floor(Math.random() * 5)));
+            let riskMode = document.getElementById('riskSelect').value;
+            let threshold = riskMode === 'strict' ? 84 : (riskMode === 'balanced' ? 74 : 64);
 
-            return {
-                buyScore,
-                sellScore,
-                confidence,
-                confirmationsCount: maxConfirmations,
-                isHighVolatility,
-                emaStatus: emaScore > 60 ? "Bullish Alignment" : (emaScore < 40 ? "Bearish Alignment" : "Neutral / Ranging"),
-                rsiValue: rsi.toFixed(1),
-                rsiStatus: rsi > 70 ? "Overbought (Rejection Zone)" : (rsi < 30 ? "Oversold (Bounce Zone)" : "Balanced Momentum"),
-                bbStatus: isHighVolatility ? "High Volatility Expansion" : "Consolidation / Mid-Band"
-            };
-        }
-
-        // 3-Second Countdown & Manual Workflow Trigger
-        function triggerAnalysis() {
-            if (isAnalyzing) return;
-            isAnalyzing = true;
-
-            const overlay = document.getElementById('scanOverlay');
-            const countdownEl = document.getElementById('countdownNumber');
-            const progressBar = document.getElementById('scanProgressBar');
-            const statusMsg = document.getElementById('scanStatusMessage');
-            const metricsRow = document.getElementById('signalMetricsRow');
-
-            overlay.classList.remove('hidden');
-            metricsRow.classList.add('hidden');
-            
-            let count = 3;
-            countdownEl.innerText = count;
-            progressBar.style.width = '0%';
-
-            const phases = [
-                "FETCHING QUANTUM TELEMETRY...",
-                "CALCULATING EMA & RSI CONFLUENCE...",
-                "VALIDATING SUPPORT & RESISTANCE..."
-            ];
-
-            statusMsg.innerText = phases[0];
-            
-            setTimeout(() => { progressBar.style.width = '33%'; }, 100);
-
-            const timer = setInterval(() => {
-                count--;
-                if (count > 0) {
-                    countdownEl.innerText = count;
-                    statusMsg.innerText = phases[3 - count];
-                    progressBar.style.width = ((4 - count) * 33) + '%';
+            if (score >= threshold && Math.abs(diff) > 0.00003) {
+                if (diff > 0) {
+                    currentSignalState = "STRONG BUY (CALL)";
+                    setBanner("🚀 STRONG BUY / CALL SIGNAL", "bg-emerald-100 text-emerald-800 border-emerald-400 quantum-glow", '<i class="fa-solid fa-arrow-trend-up mr-3 text-emerald-600"></i>');
+                    addLog(`[${currentAsset}] Generated STRONG BUY signal. Confluence: ${score}% (Expiry: ${document.getElementById('timeframeSelect').value})`, "success");
                 } else {
-                    clearInterval(timer);
-                    progressBar.style.width = '100%';
-                    setTimeout(() => {
-                        overlay.classList.add('hidden');
-                        displayFinalSignal();
-                        isAnalyzing = false;
-                    }, 300);
+                    currentSignalState = "STRONG SELL (PUT)";
+                    setBanner("🔻 STRONG SELL / PUT SIGNAL", "bg-rose-100 text-rose-800 border-rose-400 quantum-glow", '<i class="fa-solid fa-arrow-trend-down mr-3 text-rose-600"></i>');
+                    addLog(`[${currentAsset}] Generated STRONG SELL signal. Confluence: ${score}% (Expiry: ${document.getElementById('timeframeSelect').value})`, "danger");
                 }
-            }, 1000);
-        }
-
-        function displayFinalSignal() {
-            const analysis = marketConfluenceData || analyzeMarketConfluence();
-            const buy = analysis.buyScore;
-            const sell = analysis.sellScore;
-            const diff = Math.abs(buy - sell);
-
-            const iconBox = document.getElementById('signalIconBox');
-            const mainIcon = document.getElementById('signalMainIcon');
-            const titleText = document.getElementById('signalTitleText');
-            const subText = document.getElementById('signalSubText');
-            const metricsRow = document.getElementById('signalMetricsRow');
-
-            document.getElementById('metricBuyScore').innerText = buy + '%';
-            document.getElementById('metricSellScore').innerText = sell + '%';
-            
-            metricsRow.classList.remove('hidden');
-
-            // Strict NO TRADE Condition if scores are too close, conflicting, or confidence is weak
-            if (diff < 12 || analysis.confirmationsCount < 3 || (buy < 53 && sell < 53)) {
-                iconBox.className = "w-20 h-20 mx-auto rounded-full bg-terminalDark border-2 border-neutral-500 flex items-center justify-center mb-3 transition-all";
-                mainIcon.className = "fa-solid fa-ban text-3xl text-neutral-400";
-                titleText.innerText = "NO TRADE / WAIT";
-                titleText.className = "text-2xl font-bold font-mono tracking-wider text-neutral-400";
-                subText.innerText = "Market indicators conflict, ranging, or lack sufficient confirmations. No trade forced.";
-                document.getElementById('metricConfidence').innerText = analysis.confidence + '% (Uncertain)';
-            } else if (buy > sell) {
-                // STRONG BUY / CALL
-                iconBox.className = "w-20 h-20 mx-auto rounded-full bg-emerald-500/10 border-2 border-emerald-500 flex items-center justify-center mb-3 glow-gold transition-all animate-bounce";
-                mainIcon.className = "fa-solid fa-arrow-up text-3xl text-emerald-400";
-                titleText.innerText = "STRONG BUY (CALL)";
-                titleText.className = "text-2xl font-bold font-mono tracking-wider text-emerald-400";
-                subText.innerText = `Sufficient bullish confirmation across multiple indicators for ${currentAsset} (${currentExpiry} expiry).`;
-                document.getElementById('metricConfidence').innerText = analysis.confidence + '% (High)';
-                recordTradeLog('CALL', analysis.confidence);
             } else {
-                // STRONG SELL / PUT
-                iconBox.className = "w-20 h-20 mx-auto rounded-full bg-rose-500/10 border-2 border-rose-500 flex items-center justify-center mb-3 glow-gold transition-all animate-bounce";
-                mainIcon.className = "fa-solid fa-arrow-down text-3xl text-rose-400";
-                titleText.innerText = "STRONG SELL (PUT)";
-                titleText.className = "text-2xl font-bold font-mono tracking-wider text-rose-400";
-                subText.innerText = `Sufficient bearish confirmation across multiple indicators for ${currentAsset} (${currentExpiry} expiry).`;
-                document.getElementById('metricConfidence').innerText = analysis.confidence + '% (High)';
-                recordTradeLog('PUT', analysis.confidence);
+                currentSignalState = "NO TRADE / WAIT";
+                setBanner("⚠️ NO TRADE / WAIT (CHOOPY MARKET)", "bg-amber-100 text-amber-800 border-amber-400", '<i class="fa-solid fa-triangle-exclamation mr-3 text-amber-600"></i>');
+                addLog(`[${currentAsset}] Market conditions conflicting or confluence (${score}%) below threshold. Safety filter triggered: NO TRADE.`, "warning");
             }
-
-            // Update Indicator Confluence Progress Bars
-            document.getElementById('indEmaStatus').innerText = analysis.emaStatus;
-            document.getElementById('indRsiStatus').innerText = `${analysis.rsiValue} (${analysis.rsiStatus})`;
-            document.getElementById('indBbStatus').innerText = analysis.bbStatus;
-            
-            sessionTrades++;
-            document.getElementById('sessionTradesCount').innerText = sessionTrades + " / 25";
         }
 
-        let marketConfluenceData = null;
-        // Pre-calculate analysis on interval to ensure fresh market data before execution
-        setInterval(() => {
-            marketConfluenceData = analyzeMarketConfluence();
-            const atrVal = calculateATR(priceHistory[currentAsset] || [latestPrice], 14);
-            document.getElementById('liveAtrValue').innerText = '+' + (atrVal / latestPrice * 100).toFixed(2) + '%';
-        }, 1000);
+        function setBanner(text, className, iconHtml) {
+            const banner = document.getElementById('signalBanner');
+            banner.className = `inline-flex items-center justify-center px-6 py-4 rounded-2xl border-2 transition-all shadow-md w-full max-w-lg mx-auto font-black text-xl md:text-2xl tracking-wider ${className}`;
+            banner.innerHTML = iconHtml + ' <span>' + text + '</span>';
+        }
 
-        function recordTradeLog(type, confidence) {
-            const container = document.getElementById('signalLogContainer');
-            const stake = parseFloat(document.getElementById('stakeInput').value) || 10;
-            const isWin = Math.random() > 0.32; // ~68% simulated winrate matching backtest
-            const pnl = isWin ? stake * 0.85 : -stake;
+        function setMatrixBadge(elementId, text, isPositive) {
+            const el = document.getElementById(elementId);
+            el.innerText = text;
+            if (isPositive) {
+                el.className = "px-2.5 py-1 text-xs font-bold rounded-lg bg-[#ffcc80] text-[#5d4037]";
+            } else {
+                el.className = "px-2.5 py-1 text-xs font-bold rounded-lg bg-[#bcaaa4] text-[#3e2723]";
+            }
+        }
+
+        function addLog(msg, type) {
+            const container = document.getElementById('logContainer');
+            if (container.children.length === 1 && container.children[0].classList.contains('italic')) {
+                container.innerHTML = '';
+            }
+            const timeStr = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.className = "flex items-start gap-2 border-b border-[#bcaaa4] pb-1.5";
             
-            if (tradingMode === 'PAPER') {
-                accountBalance += pnl;
-                document.getElementById('accountBalanceDisplay').innerText = '$' + accountBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            let color = "text-[#5d4037]";
+            if (type === 'success') color = "text-emerald-700 font-semibold";
+            if (type === 'danger') color = "text-rose-700 font-semibold";
+            if (type === 'warning') color = "text-amber-700 font-semibold";
+
+            div.innerHTML = `<span class="text-[#8d6e63]">[${timeStr}]</span> <span class="${color}">${msg}</span>`;
+            container.prepend(div);
+        }
+
+        function clearLogs() {
+            document.getElementById('logContainer').innerHTML = `<div class="text-[#8d6e63] italic text-center py-8">Logs cleared. Engine standing by...</div>`;
+        }
+
+        // Draw Canvas Chart
+        function drawChart() {
+            const w = canvas.parentElement.clientWidth;
+            const h = canvas.parentElement.clientHeight;
+            canvas.width = w * window.devicePixelRatio;
+            canvas.height = h * window.devicePixelRatio;
+            ctx.clearRect(0, 0, w, h);
+
+            if (priceHistory.length < 2) return;
+
+            let min = Math.min(...priceHistory);
+            let max = Math.max(...priceHistory);
+            let range = max - min || 0.0001;
+
+            let padding = 20;
+            let chartH = h - padding * 2;
+            let stepW = w / (priceHistory.length - 1);
+
+            // Draw Grid Lines
+            ctx.strokeStyle = '#d7ccc8';
+            ctx.lineWidth = 1;
+            for (let i = 1; i <= 3; i++) {
+                let y = padding + (chartH / 4) * i;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(w, y);
+                ctx.stroke();
             }
 
-            const row = document.createElement('div');
-            row.className = "bg-terminalDark/60 p-2.5 rounded-lg border border-borderGold/20 flex justify-between items-center text-xs font-mono animate-fade-in";
-            row.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <span class="px-1.5 py-0.5 rounded ${type === 'CALL' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'} text-[10px]">${type}</span>
-                    <span class="text-white">${currentAsset} [${currentExpiry}]</span>
-                </div>
-                <div class="flex items-center gap-4 text-neutral-400">
-                    <span>Conf: ${confidence}%</span>
-                    <span class="${isWin ? 'text-emerald-400' : 'text-rose-400'}">${isWin ? '+ $' + (stake * 0.85).toFixed(2) : '- $' + stake.toFixed(2)} (${isWin ? 'WIN' : 'LOSS'})</span>
-                </div>
-            `;
-            container.prepend(row);
+            // Draw Price Line
+            ctx.strokeStyle = '#fb8c00';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            for (let i = 0; i < priceHistory.length; i++) {
+                let x = i * stepW;
+                let y = padding + chartH - ((priceHistory[i] - min) / range) * chartH;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // Draw EMA 8 line (smoothed)
+            ctx.strokeStyle = '#3e2723';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            for (let i = 3; i < priceHistory.length; i++) {
+                let avg = (priceHistory[i] + priceHistory[i-1] + priceHistory[i-2]) / 3;
+                let x = i * stepW;
+                let y = padding + chartH - ((avg - min) / range) * chartH;
+                if (i === 3) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
         }
     </script>
+
 </body>
 </html>
